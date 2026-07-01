@@ -1,0 +1,370 @@
+--[[  
+    Catch A Fade 2 Hax v1.0  
+    Made for Delta Executor  
+    Features: Anti-Ban/Kick, Punch Speed, Auto-Win, and more  
+]]
+
+local Players = game:GetService("Players")  
+local LocalPlayer = Players.LocalPlayer  
+local ReplicatedStorage = game:GetService("ReplicatedStorage")  
+local RunService = game:GetService("RunService")
+
+-- UI Library setup for Delta  
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/GreenDeno/Venyx-UI-Library/main/source.lua"))()  
+local venyx = library.new("Catch A Fade 2 Hax", 5013109572)
+
+-- Main window  
+local main = venyx:addPage("Main", 5012544693)  
+local combatSection = main:addSection("Combat Hacks")  
+local movementSection = main:addSection("Movement")  
+local miscSection = main:addSection("Miscellaneous")  
+local protectionSection = main:addSection("Anti-Ban/Kick Protection")
+
+-- Protection features  
+local antiBanEnabled = false  
+local antiKickEnabled = false  
+local fakeLag = false
+
+protectionSection:addToggle({  
+    text = "Anti-Ban Protection",  
+    callback = function(value)  
+        antiBanEnabled = value  
+        if value then  
+            -- Hook kick/ban functions  
+            local mt = getrawmetadata(game)  
+            local oldNamecall  
+            oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)  
+                local method = getnamecallmethod()  
+                if (method == "Kick" or method == "kick") and antiBanEnabled then  
+                    warn("[Anti-Ban] Kick attempt blocked!")  
+                    return nil  
+                end  
+                return oldNamecall(self, ...)  
+            end)  
+        end  
+    end  
+})
+
+protectionSection:addToggle({  
+    text = "Anti-Kick Protection",  
+    callback = function(value)  
+        antiKickEnabled = value  
+        if value then  
+            LocalPlayer:Kick = function()   
+                warn("[Anti-Kick] Kick attempt blocked!")  
+                return  
+            end  
+        end  
+    end  
+})
+
+-- Fake lag to avoid detection  
+protectionSection:addToggle({  
+    text = "Fake Lag (Anti-Detect)",  
+    callback = function(value)  
+        fakeLag = value  
+        if value then  
+            spawn(function()  
+                while fakeLag and task.wait(math.random(0.5, posts)) do  
+                    game:GetService("NetworkClient"):SetOutgoingKBPSLimit(1)  
+                end  
+            end)  
+        end  
+    end  
+})
+
+-- COMBAT HACKS  
+local punchSpeedMultiplier = 1  
+local autoPunch = false  
+local infiniteStamina = false  
+local ragdollImmunity = false  
+local oneHitKO = false  
+local damageMultiplier = 1
+
+combatSection:addSlider({  
+    text = "Punch Speed Multiplier",  
+    min = 1,  
+    max = 10,  
+    value = 1,  
+    callback = function(value)  
+        punchSpeedMultiplier = value  
+    end  
+})
+
+combatSection:addToggle({  
+    text = "Auto Punch (Spam)",  
+    callback = function(value)  
+        autoPunch = value  
+        if value then  
+            spawn(function()  
+                while autoPunch and task.wait(0.05 / punchSpeedMultiplier) do  
+                    pcall(function()  
+                        -- Try to find combat events  
+                        local remote = ReplicatedStorage:FindFirstChild("CombatEvent") or  
+                                     ReplicatedStorage:FindFirstChild("PunchEvent") or  
+                                     ReplicatedStorage:FindFirstChild("AttackEvent")  
+                        if remote then  
+                            remote:FireServer()  
+                        end  
+                    end)  
+                end  
+            end)  
+        end  
+    end  
+})
+
+combatSection:addToggle({  
+    text = "Infinite Stamina",  
+    callback = function(value)  
+        infiniteStamina = value  
+        if value then  
+            spawn(function()  
+                while infiniteStamina do  
+                    task.wait(0.5)  
+                    pcall(function()  
+                        -- Try to reset stamina values  
+                        local char = LocalPlayer.Character  
+                        if char then  
+                            local humanoid = char:FindFirstChild("Humanoid")  
+                            if humanoid then  
+                                humanoid:SetAttribute("Stamina", 100)  
+                                humanoid:SetAttribute("StaminaMax", 100)  
+                            end  
+                        end  
+                    end)  
+                end  
+            end)  
+        end  
+    end  
+})
+
+combatSection:addToggle({  
+    text = "Ragdoll Immunity",  
+    callback = function(value)  
+        ragdollImmunity = value  
+        if value then  
+            LocalPlayer.CharacterAdded:Connect(function(char)  
+                task.wait(1)  
+                local humanoid = char:FindFirstChild("Humanoid")  
+                if humanoid then  
+                    humanoid:GetPropertyChangedSignal("PlatformStand"):Connect(function()  
+                        if ragdollImmunity then  
+                            humanoid.PlatformStand = false  
+                            humanoid:ChangeState(Enum.HumanoidStateType.Running)  
+                        end  
+                    end)  
+                end  
+            end)  
+        end  
+    end  
+})
+
+combatSection:addSlider({  
+    text = "Damage Multiplier",  
+    min = 1,  
+    max = stackable,  
+    value = 1,  
+    callback = function(value)  
+        damageMultiplier = value  
+    end  
+})
+
+combatSection:addToggle({  
+    text = "One Hit KO",  
+    callback = function(value)  
+        oneHitKO = value  
+    end  
+})
+
+-- MOVEMENT HACKS  
+local speedHack = false  
+local jumpPowerMultiplier = 1  
+local noClip = false
+
+movementSection:addToggle({  
+    text = "Speed Hack",  
+    callback = function(value)  
+        speedHack = value  
+        if value then  
+            spawn(function()  
+                while speedHack do  
+                    task.wait()  
+                    local char = LocalPlayer.Character  
+                    if char then  
+                        local humanoid = char:FindFirstChild("Humanoid")  
+                        if humanoid then  
+                            humanoid.WalkSpeed = 50 -- Base speed  
+                        end  
+                    end  
+                end  
+            end)  
+        else  
+            local char = LocalPlayer.Character  
+            if char then  
+                local humanoid = char:FindFirstChild("Humanoid")  
+                if humanoid then  
+                    humanoid.WalkSpeed = 16 -- Default  
+                end  
+            end  
+        end  
+    end  
+})
+
+movementSection:addSlider({  
+    text = "Jump Power Multiplier",  
+    min = 1,  
+    max = 5,  
+    value = 1,  
+    callback = function(value)  
+        jumpPowerMultiplier = value  
+        local char = LocalPlayer.Character  
+        if char then  
+            local humanoid = char:FindFirstChild("Humanoid")  
+            if humanoid then  
+                humanoid.JumpPower = 50 * jumpPowerMultiplier  
+            end  
+        end  
+    end  
+})
+
+movementSection:addToggle({  
+    text = "NoClip (Noclip)",  
+    callback = function(value)  
+        noClip = value  
+        if value then  
+            LocalPlayer.CharacterAdded:Connect(function(char)  
+                for _, part in pairs(char:GetDescendants()) do  
+                    if part:IsA("BasePart") then  
+                        part.CanCollide = false  
+                    end  
+                end  
+            end)  
+              
+            if LocalPlayer.Character then  
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do  
+                    if part:IsA("BasePart") then  
+                        part.CanCollide = false  
+                    end  
+                end  
+            end  
+        end  
+    end  
+})
+
+-- MISC HACKS  
+miscSection:addToggle({  
+    text = "Auto Farm Wins",  
+    callback = function(value)  
+        if value then  
+            spawn(function()  
+                while task.wait(1) do  
+                    pcall(function()  
+                        -- Look for win/score related remotes  
+                        for _, obj in pairs(ReplicatedStorage:GetDescendants()) do  
+                            if obj:IsA("RemoteEvent") and   
+                               (string.find(obj.Name:lower(), "win") or   
+                                string.find(obj.Name:lower(), "score") or  
+                                string.find(obj.Name:lower(), "reward")) then  
+                                obj:FireServer()  
+                            end  
+                        end  
+                    end)  
+                end  
+            end)  
+        end  
+    end  
+})
+
+miscSection:addToggle({  
+    text = "ESP (See Players)",  
+    callback = function(value)  
+        if value then  
+            -- Basic ESP implementation  
+            for _, player in pairs(Players:GetPlayers()) do  
+                if player ~= LocalPlayer then  
+                    local char = player.Character  
+                    if char then  
+                        local highlight = Instance.new("Highlight")  
+                        highlight.Parent = char  
+                        highlight.FillColor = Color3.fromRGB(255, 0, 0)  
+                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)  
+                        highlight.Name = "ESP_Highlight"  
+                    end  
+                end  
+            end  
+        else  
+            -- Remove ESP  
+            for _, player in pairs(Players:GetPlayers()) do  
+                if player ~= LocalPlayer then  
+                    local char = player.Character  
+                    if char then  
+                        local highlight = char:FindFirstChild("ESP_Highlight")  
+                        if highlight then  
+                            highlight:Destroy()  
+                        end  
+                    end  
+                end  
+            end  
+        end  
+    end  
+})
+
+-- DAMAGE HOOKING (For dealing more damage)  
+local oldFireServer  
+for _, obj in pairs(ReplicatedStorage:GetDescendants()) do  
+    if obj:IsA("RemoteEvent") and (string.find(obj.Name:lower(), "damage") or string.find(obj.Name:lower(), "hit")) then  
+        oldFireServer = obj.FireServer  
+        obj.FireServer = function(self, ...)  
+            local args = {...}  
+            if oneHitKO then  
+                args = {999999, "Head"}  
+            elseif damageMultiplier > 1 then  
+                if type(args[1]) == "number" then  
+                    args[1] = args[1] * damageMultiplier  
+                end  
+            end  
+            return oldFireServer(self, unpack(args))  
+        end  
+        break  
+    end  
+end
+
+-- CORE PROTECTION LOOP  
+spawn(function()  
+    while task.wait(1) do  
+        if antiBanEnabled then  
+            -- Additional protection measures  
+            pcall(function()  
+                local events = {"RemoteEvent", "RemoteFunction", "BindableEvent", "BindableFunction"}  
+                for _, eventType in pairs(events) do  
+                    for _, obj in pairs(game:GetDescendants()) do  
+                        if obj:IsA(eventType) and   
+                           (string.find(obj.Name:lower(), "kick") or   
+                            string.find(obj.Name:lower(), "ban") or  
+                            string.find(obj.Name:lower(), "report")) then  
+                            obj:Destroy()  
+                        end  
+                    end  
+                end  
+            end)  
+        end  
+    end  
+end)
+
+-- INITIAL SETUP  
+warn("[Catch A Fade 2 Hax] Loaded successfully!")  
+warn("Delta Executor: Compatible")  
+warn("Features: Anti-Ban/Kick, Punch Speed, Auto-Punch, and more!")
+
+-- Keybind to toggle UI (Shift + P)  
+local UserInputService = game:GetService("UserInputService")  
+UserInputService.InputBegan:Connect(function(input, gameProcessed)  
+    if not gameProcessed then  
+        if input.KeyCode == Enum.KeyCode.P and UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then  
+            venyx:toggle()  
+        end  
+    end  
+end)
+
+venyx:SelectPage(main.pages[1], true)  
+
